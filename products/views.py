@@ -2,13 +2,14 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Product, Category, Review
-from serializers import ProductSerializer, ProductReviewSerializer, CategorySerializer, ReviewSerializer
+from .serializers import ProductSerializer, ProductValidateSerializer, CategorySerializer, ReviewSerializer, \
+    ReviewValidateSerializer, CategoryValidateSerializer
 
 
 @api_view(["GET"])
 def product_review_list(request):
     products_reviews = Product.objects.all()
-    serializer = ProductReviewSerializer(products_reviews, many=True)
+    serializer = ProductSerializer(products_reviews, many=True)
     return Response(data=serializer.data)
 
 
@@ -21,10 +22,13 @@ def product_list_api_view(request):
         return Response(data=data)
 
     elif request.method == 'POST':
-        title = request.data.get('title')
-        description = request.data.get('description')
-        price = request.data.get('price')
-        category = request.data.get('category')
+        serializer = ProductValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        title = request.validated_data.get('title')
+        description = request.validated_data.get('description')
+        price = request.validated_data.get('price')
+        category = request.validated_data.get('category')
 
         product = Product.objects.create(
             title=title,
@@ -68,7 +72,9 @@ def category_list_api_view(request):
         return Response(data=data)
 
     elif request.method == 'POST':
-        name = request.data.get('name')
+        serializer = CategoryValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        name = request.validated_data.get('name')
         category = Product.objects.create(
             name=name
         )
@@ -102,9 +108,11 @@ def review_list_api_view(request):
         return Response(data=data)
 
     elif request.method == 'POST':
-        text = request.data.get('text')
-        product = request.data.get('product')
-        stars = request.data.get('stars')
+        serializer = ReviewValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        text = request.validated_data.get('text')
+        product = request.validated_data.get('product')
+        stars = request.validated_data.get('stars')
         review = Product.objects.create(
             text=text,
             product=product,
